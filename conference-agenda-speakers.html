@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conference Agenda & Speakers</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #18202a;
+      --muted: #687386;
+      --primary: #1859c9;
+      --primary-dark: #12489f;
+      --border: #e3e8ef;
+      --success: #157347;
+      --danger: #b42318;
+      --shadow: 0 10px 30px rgba(24, 32, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 70px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .status-box {
+      min-width: 220px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #98a2b3;
+    }
+
+    .dot.loading { background: #f79009; }
+    .dot.success { background: #12b76a; }
+    .dot.error { background: #f04438; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 28px;
+      background: var(--card);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      padding: 11px 17px;
+      border-radius: 10px;
+      transition: 0.2s ease;
+    }
+
+    button:hover { background: var(--primary-dark); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .secondary {
+      background: #eef4ff;
+      color: var(--primary);
+    }
+
+    .secondary:hover { background: #dce9ff; }
+
+    .conference-pill {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-top: 36px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 27px;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .agenda {
+      display: grid;
+      gap: 14px;
+    }
+
+    .session-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 145px 1fr;
+      gap: 18px;
+    }
+
+    .session-time {
+      color: var(--primary);
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .session-date {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    .session-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .session-meta,
+    .session-description {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .speaker-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .speaker-card {
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .speaker-photo {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      background: #eef1f5;
+      display: block;
+    }
+
+    .speaker-placeholder {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: linear-gradient(135deg, #eef1f5, #dfe5ec);
+      display: grid;
+      place-items: center;
+      color: #7c8798;
+      font-size: 34px;
+      font-weight: 800;
+    }
+
+    .speaker-body {
+      padding: 16px;
+    }
+
+    .speaker-name {
+      margin: 0 0 7px;
+      font-size: 18px;
+    }
+
+    .speaker-role {
+      margin: 0;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .speaker-company,
+    .speaker-bio {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .empty, .error-box {
+      background: var(--card);
+      border: 1px dashed #cfd7e3;
+      border-radius: 14px;
+      padding: 22px;
+      color: var(--muted);
+    }
+
+    .error-box {
+      color: var(--danger);
+      border-color: #f6c7c4;
+      background: #fff7f6;
+      white-space: pre-wrap;
+    }
+
+    details {
+      margin-top: 28px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    pre {
+      max-height: 420px;
+      overflow: auto;
+      padding: 14px;
+      border-radius: 10px;
+      background: #101828;
+      color: #d0d5dd;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .speaker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero { align-items: flex-start; flex-direction: column; }
+      .status-box { width: 100%; }
+    }
+
+    @media (max-width: 620px) {
+      .container { width: min(100% - 22px, 1180px); padding-top: 24px; }
+      .session-card { grid-template-columns: 1fr; gap: 8px; }
+      .speaker-grid { grid-template-columns: 1fr; }
+      .conference-pill { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <div>
+        <h1>Conference Agenda & Speakers</h1>
+        <p>Live data from Expo Web API</p>
+      </div>
+      <div class="status-box">
+        <div class="status-line">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Ready to load</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <button id="loadBtn" type="button">Login & Fetch Data</button>
+      <button id="allSpeakersBtn" type="button" class="secondary" disabled>Show First 4 Speakers</button>
+      <span class="conference-pill">Conference ID: <strong>1738</strong></span>
+    </div>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Agenda</h2>
+        <span class="count" id="sessionCount">0 sessions</span>
+      </div>
+      <div id="agenda" class="agenda">
+        <div class="empty">Click “Login & Fetch Data” to load the agenda.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Speakers</h2>
+        <span class="count" id="speakerCount">Loading speakers…</span>
+      </div>
+      <div id="speakers" class="speaker-grid">
+        <div class="empty">Speaker data will appear here.</div>
+      </div>
+    </section>
+
+    <div id="errorWrap"></div>
+
+    <details>
+      <summary>API debug response</summary>
+      <h3>Sessions response</h3>
+      <pre id="sessionsDebug">Not loaded.</pre>
+      <h3>Speakers response</h3>
+      <pre id="speakersDebug">Not loaded.</pre>
+    </details>
+
+    <p class="note">
+      Data is loaded through api.php, which logs in server-side using config.php.
+      Credentials are never sent to the browser.
+    </p>
+  </main>
+
+<script>
+(() => {
+  const CONFIG = {
+    sessionsUrl: 'api.php?type=sessions',
+    speakersUrl: 'api.php?type=speakers'
+  };
+
+  let allSpeakers = [];
+  let showingAllSpeakers = true;
+
+  const $ = (selector) => document.querySelector(selector);
+  const agendaEl = $('#agenda');
+  const speakersEl = $('#speakers');
+  const sessionCountEl = $('#sessionCount');
+  const speakerCountEl = $('#speakerCount');
+  const statusTextEl = $('#statusText');
+  const statusDotEl = $('#statusDot');
+  const loadBtn = $('#loadBtn');
+  const allSpeakersBtn = $('#allSpeakersBtn');
+  const errorWrap = $('#errorWrap');
+
+  const sessionsDebug = $('#sessionsDebug');
+  const speakersDebug = $('#speakersDebug');
+
+  function setStatus(text, type = '') {
+    statusTextEl.textContent = text;
+    statusDotEl.className = 'dot' + (type ? ` ${type}` : '');
+  }
+
+  function safeText(value, fallback = '') {
+    if (value === null || value === undefined) return fallback;
+    if (typeof value === 'object') return fallback;
+    return String(value).trim() || fallback;
+  }
+
+  function firstValue(obj, keys, fallback = '') {
+    if (!obj || typeof obj !== 'object') return fallback;
+
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null && obj[key] !== '') {
+        return obj[key];
+      }
+
+      const actualKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
+      if (actualKey && obj[actualKey] !== undefined && obj[actualKey] !== null && obj[actualKey] !== '') {
+        return obj[actualKey];
+      }
+    }
+
+    return fallback;
+  }
+
+  function extractArray(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (!payload || typeof payload !== 'object') return [];
+
+    const likelyKeys = [
+      'data', 'result', 'results', 'items', 'records', 'sessions', 'speakers',
+      'sessionList', 'speakerList', 'response', 'responseData'
+    ];
+
+    for (const key of likelyKeys) {
+      const value = firstValue(payload, [key], null);
+      if (Array.isArray(value)) return value;
+      if (value && typeof value === 'object') {
+        const nested = extractArray(value);
+        if (nested.length) return nested;
+      }
+    }
+
+    for (const value of Object.values(payload)) {
+      if (Array.isArray(value)) return value;
+    }
+
+    return [];
+  }
+
+  async function parseResponse(response) {
+    const text = await response.text();
+    let data = text;
+
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (_) {}
+
+    if (!response.ok) {
+      const error = new Error(`HTTP ${response.status} ${response.statusText}`);
+      error.responseBody = data;
+      throw error;
+    }
+
+    return data;
+  }
+
+  async function getJson(url) {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+    return parseResponse(response);
+  }
+
+  function formatDate(value) {
+    const raw = safeText(value);
+    if (!raw) return '';
+
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).format(d);
+  }
+
+  function formatTime(value) {
+    const raw = safeText(value);
+    if (!raw) return '';
+
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime()) && /T|\d{4}-\d{2}-\d{2}/.test(raw)) {
+      return new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(d);
+    }
+
+    return raw;
+  }
+
+  function escapeHtml(value) {
+    return safeText(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function renderAgenda(payload) {
+    const sessions = extractArray(payload);
+    sessionCountEl.textContent = `${sessions.length} session${sessions.length === 1 ? '' : 's'}`;
+
+    if (!sessions.length) {
+      agendaEl.innerHTML = '<div class="empty">No sessions found in the API response.</div>';
+      return;
+    }
+
+    agendaEl.innerHTML = sessions.map((session) => {
+      const title = firstValue(session, [
+        'sessionTitle', 'SessionTitle', 'title', 'Title', 'sessionName',
+        'SessionName', 'name', 'Name', 'topic', 'Topic'
+      ], 'Untitled session');
+
+      const date = firstValue(session, [
+        'sessionDate', 'SessionDate', 'date', 'Date', 'startDate', 'StartDate'
+      ], '');
+
+      const start = firstValue(session, [
+        'startTime', 'StartTime', 'sessionStartTime', 'SessionStartTime',
+        'startDateTime', 'StartDateTime', 'fromTime', 'FromTime'
+      ], '');
+
+      const end = firstValue(session, [
+        'endTime', 'EndTime', 'sessionEndTime', 'SessionEndTime',
+        'endDateTime', 'EndDateTime', 'toTime', 'ToTime'
+      ], '');
+
+      const hall = firstValue(session, [
+        'hallName', 'HallName', 'roomName', 'RoomName', 'venue', 'Venue',
+        'location', 'Location', 'stageName', 'StageName'
+      ], '');
+
+      const category = firstValue(session, [
+        'sessionType', 'SessionType', 'category', 'Category', 'trackName',
+        'TrackName', 'type', 'Type'
+      ], '');
+
+      const description = firstValue(session, [
+        'description', 'Description', 'sessionDescription', 'SessionDescription',
+        'summary', 'Summary', 'shortDescription', 'ShortDescription'
+      ], '');
+
+      const timeLabel = [formatTime(start), formatTime(end)].filter(Boolean).join(' – ') || 'Time TBA';
+      const meta = [safeText(hall), safeText(category)].filter(Boolean).join(' • ');
+
+      return `
+        <article class="session-card">
+          <div class="session-time">
+            ${escapeHtml(timeLabel)}
+            ${date ? `<span class="session-date">${escapeHtml(formatDate(date))}</span>` : ''}
+          </div>
+          <div>
+            <h3 class="session-title">${escapeHtml(title)}</h3>
+            ${meta ? `<p class="session-meta">${escapeHtml(meta)}</p>` : ''}
+            ${description ? `<p class="session-description">${escapeHtml(description)}</p>` : ''}
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  function getInitials(name) {
+    const parts = safeText(name, 'Speaker').split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map(p => p[0]?.toUpperCase() || '').join('') || 'SP';
+  }
+
+  function normalizeImageUrl(value) {
+    const url = safeText(value);
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
+
+    // If the API returns a relative image path, this attempts to resolve it
+    // against the Expo API host.
+    try {
+      return new URL(url, 'https://expowebapi.azurewebsites.net/').href;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function renderSpeakers() {
+    const list = showingAllSpeakers ? allSpeakers : allSpeakers.slice(0, 4);
+
+    speakerCountEl.textContent = showingAllSpeakers
+      ? `Showing all ${allSpeakers.length} speaker${allSpeakers.length === 1 ? '' : 's'}`
+      : `Showing ${Math.min(4, allSpeakers.length)} of ${allSpeakers.length} speakers`;
+
+    if (!list.length) {
+      speakersEl.innerHTML = '<div class="empty">No speakers found in the API response.</div>';
+      allSpeakersBtn.disabled = true;
+      return;
+    }
+
+    speakersEl.innerHTML = list.map((speaker) => {
+      const name = firstValue(speaker, [
+        'speakerName', 'SpeakerName', 'fullName', 'FullName',
+        'name', 'Name', 'displayName', 'DisplayName'
+      ], 'Speaker');
+
+      const role = firstValue(speaker, [
+        'speakerTitle', 'designation', 'Designation', 'jobTitle', 'JobTitle',
+        'position', 'Position', 'title', 'Title'
+      ], '');
+
+      const company = firstValue(speaker, [
+        'company', 'Company', 'companyName', 'CompanyName',
+        'organization', 'Organization', 'organisation', 'Organisation'
+      ], '');
+
+      const bio = firstValue(speaker, [
+        'bio', 'Bio', 'biography', 'Biography', 'description', 'Description',
+        'profile', 'Profile'
+      ], '');
+
+      const image = normalizeImageUrl(firstValue(speaker, [
+        'speakerImage', 'SpeakerImage', 'speakerPhoto', 'SpeakerPhoto',
+        'profileImage', 'ProfileImage', 'profileImageUrl', 'ProfileImageUrl',
+        'image', 'Image', 'imageUrl', 'ImageUrl', 'photo', 'Photo'
+      ], ''));
+
+      const media = image
+        ? `<img class="speaker-photo" src="${escapeHtml(image)}" alt="${escapeHtml(name)}" onerror="this.outerHTML='<div class=&quot;speaker-placeholder&quot;>${escapeHtml(getInitials(name))}</div>'">`
+        : `<div class="speaker-placeholder">${escapeHtml(getInitials(name))}</div>`;
+
+      return `
+        <article class="speaker-card">
+          ${media}
+          <div class="speaker-body">
+            <h3 class="speaker-name">${escapeHtml(name)}</h3>
+            ${role ? `<p class="speaker-role">${escapeHtml(role)}</p>` : ''}
+            ${company ? `<p class="speaker-company">${escapeHtml(company)}</p>` : ''}
+            ${bio ? `<p class="speaker-bio">${escapeHtml(bio)}</p>` : ''}
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    allSpeakersBtn.disabled = allSpeakers.length <= 4;
+    allSpeakersBtn.textContent = showingAllSpeakers ? 'Show First 4 Speakers' : 'Show All Speakers';
+  }
+
+  function renderError(error) {
+    const body = error?.responseBody
+      ? `\n\nAPI response:\n${typeof error.responseBody === 'string'
+          ? error.responseBody
+          : JSON.stringify(error.responseBody, null, 2)}`
+      : '';
+
+    errorWrap.innerHTML = `
+      <div class="error-box">
+        <strong>Unable to load API data.</strong><br><br>
+        ${escapeHtml(error?.message || 'Unknown error')}
+        ${escapeHtml(body)}
+        <br><br>
+        If the browser console shows a CORS error, the API server must allow this page's origin,
+        or these requests need to be moved to a backend/proxy.
+      </div>
+    `;
+  }
+
+  async function loadData() {
+    errorWrap.innerHTML = '';
+    loadBtn.disabled = true;
+    allSpeakersBtn.disabled = true;
+    try {
+      setStatus('Fetching agenda & speakers…', 'loading');
+
+      const [sessionsPayload, speakersPayload] = await Promise.all([
+        getJson(CONFIG.sessionsUrl),
+        getJson(CONFIG.speakersUrl)
+      ]);
+
+      sessionsDebug.textContent = JSON.stringify(sessionsPayload, null, 2);
+      speakersDebug.textContent = JSON.stringify(speakersPayload, null, 2);
+
+      renderAgenda(sessionsPayload);
+      allSpeakers = extractArray(speakersPayload);
+      showingAllSpeakers = true;
+      renderSpeakers();
+
+      setStatus('Data loaded successfully', 'success');
+    } catch (error) {
+      console.error(error);
+      setStatus('Request failed', 'error');
+      renderError(error);
+    } finally {
+      loadBtn.disabled = false;
+    }
+  }
+
+  allSpeakersBtn.addEventListener('click', () => {
+    showingAllSpeakers = !showingAllSpeakers;
+    renderSpeakers();
+  });
+
+  loadBtn.addEventListener('click', loadData);
+
+  // Auto-load on page open.
+  loadData();
+})();
+</script>
+</body>
+</html>
